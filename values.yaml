@@ -1,0 +1,30 @@
+# Default values for zootube.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+images:
+  api:
+    repository: nquockhai/zootube-api
+    tag: latest
+    pullPolicy: Always
+  postgres:
+    repository: postgres
+    tag: latest
+    pullPolicy: Always
+
+api:
+  replicas: 1
+  component: api
+  service:
+    type: ClusterIP
+    port: 8080
+
+postgres:
+  component: postgres
+  service:
+    type: ClusterIP
+    port: 5432
+  config:
+    user: postgres
+    db: zootube
+    password: password

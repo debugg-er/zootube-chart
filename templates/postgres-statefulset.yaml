@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "zootube.fullname" . }}-{{ .Values.postgres.component }}
+  labels:
+    {{- include "zootube.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  serviceName: {{ .Values.postgres.component }}
+  selector:
+    matchLabels:
+      {{- include "zootube.selectorLabels" . | nindent 6 }}
+      component: {{ .Values.api.component }}
+  template:
+    metadata:
+      labels:
+        {{- include "zootube.selectorLabels" . | nindent 8 }}
+        component: {{ .Values.api.component }}
+    spec:
+      containers:
+      - name: {{ .Values.postgres.component }}
+        image: {{ .Values.images.postgres.repository }}:{{ .Values.images.postgres.tag | default "latest" }}
+        imagePullPolicy: {{ .Values.images.postgres.pullPolicy }}
+        envFrom:
+        - secretRef:
+            name: {{ include "zootube.fullname" . }}-{{ .Values.postgres.component }}-secret
+        env:
+        - name: TZ
+          value: GMT
+        - name: PGTZ
+          value: GMT
+        ports:
+        - name: postgres
+          containerPort: 5432
+          protocol: TCP
+        volumeMounts:
+        - name: dbdata
+          mountPath: /var/lib/postgresql/data
+      
+      volumes:
+      - name: dbdata
+        emptyDir: {}
