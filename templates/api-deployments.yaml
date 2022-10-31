@@ -20,6 +20,29 @@ spec:
       - name: {{ .Values.api.component }}
         image: {{ .Values.images.api.repository }}:{{ .Values.images.api.tag | default "latest" }}
         imagePullPolicy: {{ .Values.images.api.pullPolicy }}
+        env:
+        - name: NODE_ENV
+          value: development
+        - name: PORT
+          value: '8080'
+        - name: REDIS_HOST
+          value: {{ include "zootube.fullname" . }}-{{ .Values.redis.component }}
+        - name: DB_HOST
+          value: {{ include "zootube.fullname" . }}-{{ .Values.postgres.component }}
+        - name: DB_PORT
+          value: '5432'
+        - name: DB_NAME
+          value: {{ .Values.postgres.config.db }}
+        - name: DB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "zootube.fullname" . }}-{{ .Values.postgres.component }}-secret
+              key: POSTGRES_USER
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "zootube.fullname" . }}-{{ .Values.postgres.component }}-secret
+              key: POSTGRES_PASSWORD
         ports:
         - name: http
           containerPort: 8080
@@ -28,10 +51,12 @@ spec:
         #   httpGet:
         #     path: /
         #     port: http
-        # readinessProbe:
-        #   httpGet:
-        #     path: /
-        #     port: http
+        readinessProbe:
+          httpGet:
+            path: /videos
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
         {{- if .Values.api.resources }}
         resources:
           {{- toYaml .Values.api.resources | nindent 10 }}

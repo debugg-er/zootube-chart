@@ -10,12 +10,12 @@ spec:
   selector:
     matchLabels:
       {{- include "zootube.selectorLabels" . | nindent 6 }}
-      component: {{ .Values.api.component }}
+      component: {{ .Values.postgres.component }}
   template:
     metadata:
       labels:
         {{- include "zootube.selectorLabels" . | nindent 8 }}
-        component: {{ .Values.api.component }}
+        component: {{ .Values.postgres.component }}
     spec:
       containers:
       - name: {{ .Values.postgres.component }}
@@ -29,6 +29,8 @@ spec:
           value: GMT
         - name: PGTZ
           value: GMT
+        - name: POSTGRES_DB
+          value: {{ .Values.postgres.config.db }}
         ports:
         - name: postgres
           containerPort: 5432

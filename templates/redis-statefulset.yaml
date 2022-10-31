@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "zootube.fullname" . }}-{{ .Values.redis.component }}
+  labels:
+    {{- include "zootube.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  serviceName: {{ .Values.redis.component }}
+  selector:
+    matchLabels:
+      {{- include "zootube.selectorLabels" . | nindent 6 }}
+      component: {{ .Values.redis.component }}
+  template:
+    metadata:
+      labels:
+        {{- include "zootube.selectorLabels" . | nindent 8 }}
+        component: {{ .Values.redis.component }}
+    spec:
+      containers:
+      - name: {{ .Values.redis.component }}
+        image: {{ .Values.images.redis.repository }}:{{ .Values.images.redis.tag | default "latest" }}
+        imagePullPolicy: {{ .Values.images.redis.pullPolicy }}
+        ports:
+        - name: redis
+          containerPort: 6379
+          protocol: TCP
+        command:
+          - 'redis-server'
+          - '--save 60 1'
+          - '--loglevel warning'
+
+        volumeMounts:
+        - name: redisdata
+          mountPath: /var/lib/redis 
+      
+      volumes:
+      - name: redisdata
+        emptyDir: {}

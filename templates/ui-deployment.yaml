@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "zootube.fullname" . }}-{{ .Values.ui.component }}
+  labels:
+    {{- include "zootube.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "zootube.selectorLabels" . | nindent 6 }}
+      component: {{ .Values.ui.component }}
+  template:
+    metadata:
+      labels:
+        {{- include "zootube.selectorLabels" . | nindent 8 }}
+        component: {{ .Values.ui.component }}
+    spec:
+      initContainers:
+      - name: build-ui
+        image: node:14
+        command:
+        - bash
+        - -c
+        - |
+          cd /home
+          git clone https://github.com/debugg-er/zootube
+          cd zootube
+          npm ci
+          npm run build
+          # mkdir build
+          # echo "<h1>Hello world (react)</h1>" > build/index.html
+          cp -r build/* /app
+        env:
+        - name: REACT_APP_API_URL
+          value: 'http://localhost:8081'
+        - name: REACT_APP_STATIC_URL
+          value: 'http://localhost:8082'
+        - name: REACT_APP_LIVE_URL
+          value: 'http://localhost:8083'
+        - name: REACT_APP_CHAT_HOST
+          value: 'http://localhost:8084'
+        - name: REACT_APP_CHAT_PATH
+          value: '/chat'
+        volumeMounts:
+        - name: assets
+          mountPath: /app
+      containers:
+      - name: {{ .Values.ui.component }}
+        image: nginx
+        imagePullPolicy: {{ .Values.images.ui.pullPolicy }}
+        ports:
+        - name: http
+          containerPort: 80
+          protocol: TCP
+        volumeMounts:
+        - name: assets
+          mountPath: /var/www/zootube/html
+        - name: nginx-config
+          mountPath: /etc/nginx/nginx.conf
+          subPath: nginx.conf
+
+      volumes:
+      - name: assets
+        emptyDir: {}
+      - name: nginx-config
+        configMap:
+          name: {{ include "zootube.fullname" . }}-{{ .Values.ui.component }}-cm

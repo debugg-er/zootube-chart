@@ -7,8 +7,16 @@ images:
     repository: nquockhai/zootube-api
     tag: latest
     pullPolicy: Always
+  ui:
+    repository: nquockhai/zootube-ui
+    tag: latest
+    pullPolicy: Always
   postgres:
     repository: postgres
+    tag: latest
+    pullPolicy: Always
+  redis:
+    repository: redis
     tag: latest
     pullPolicy: Always
 
@@ -16,15 +24,27 @@ api:
   replicas: 1
   component: api
   service:
-    type: ClusterIP
+    type: LoadBalancer
     port: 8080
 
 postgres:
   component: postgres
   service:
-    type: ClusterIP
+    type: LoadBalancer
     port: 5432
   config:
     user: postgres
     db: zootube
     password: password
+
+redis:
+  component: redis
+  service:
+    type: LoadBalancer
+    port: 6379
+
+ui:
+  component: ui
+  service:
+    type: LoadBalancer
+    port: 3000
